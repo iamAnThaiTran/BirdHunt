@@ -2,6 +2,7 @@
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include<vector>
 using namespace std ;
 
 const int SCREEN_WIDTH = 1200;
@@ -120,25 +121,64 @@ void Base::render( SDL_Rect* clip, double angle, SDL_Point* center, SDL_Renderer
 
 	//Render to screen
 	SDL_RenderCopyEx( grenderer, mTexture, clip, &renderQuad, angle, center, flip );
-}
 
+}
+class Bullet:public Base
+{
+public:
+    Bullet() ;
+    ~Bullet() ;
+    void MouseAction() ;
+    void BulletMove() ;
+private:
+    int vel_bullet_x ;
+    int vel_bullet_y ;
+
+
+
+};
+Bullet::Bullet()
+{
+    vel_bullet_x = 0 ;
+    vel_bullet_y = 0 ;
+    mPosx = 0 ;
+    mPosy = 0 ;
+
+}
+Bullet::~Bullet()
+{
+
+}
+void Bullet::MouseAction()
+{
+
+}
+void Bullet::BulletMove()
+{
+
+}
 class MainObject: public Base
 {
 public:
     MainObject() ;
     ~MainObject() ;
+
     bool lorr(SDL_Event &e) ;
-    int vel = 10 ;
+    int vel = 5 ;
     void HandleAction(SDL_Event &e) ;
     void HandleMove() ;
+    vector<Bullet> GetBulletList() const{return p_bullet_list ;}
 private:
     int mVelx, mVely ;
+    vector<Bullet> p_bullet_list ;
 
 
 };
 MainObject::MainObject()
 {
     mVelx = 0 ;
+    mPosy = 423 ;
+    mPosx = 600 ;
     mVely = 0 ;
 }
 MainObject::~MainObject()
@@ -147,7 +187,7 @@ MainObject::~MainObject()
 }
 bool MainObject::lorr(SDL_Event &e)
 {
-    if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
+    if( e.type == SDL_KEYDOWN )
     {
         //Adjust the velocity
         switch( e.key.keysym.sym )
@@ -166,7 +206,14 @@ void MainObject::HandleAction( SDL_Event &e )
         //Adjust the velocity
         switch( e.key.keysym.sym )
         {
-            case SDLK_UP: mVely -= vel; break;
+        case SDLK_UP:
+            {
+                for(int i = 1 ; i <= 50 ; i++)
+                {
+                    mPosy -= 1 ;
+                }
+                break;
+            }
             case SDLK_DOWN: mVely += vel; break;
             case SDLK_LEFT: mVelx -= vel; break;
             case SDLK_RIGHT: mVelx += vel; break;
@@ -178,7 +225,14 @@ void MainObject::HandleAction( SDL_Event &e )
         //Adjust the velocity
         switch( e.key.keysym.sym )
         {
-            case SDLK_UP: mVely += vel; break;
+            case SDLK_UP:
+                {
+                    for(int i =1 ; i <= 50 ; i++)
+                    {
+                        mPosy += 1 ;
+                    }
+                    break;
+                };
             case SDLK_DOWN: mVely -= vel; break;
             case SDLK_LEFT: mVelx += vel; break;
             case SDLK_RIGHT: mVelx -= vel; break;
@@ -202,12 +256,13 @@ void MainObject::HandleMove()
     mPosy += mVely;
 
     //If the dot went too far up or down
-    if( ( mPosy < 0 ) || ( mPosy + mHeight > SCREEN_HEIGHT ) )
+    if( ( mPosy < 0 ) || ( mPosy + mHeight > 523 ) )
     {
         //Move back
         mPosy -= mVely;
     }
 }
+
 
 
 int main(int argc, char* argv[])
@@ -241,12 +296,14 @@ int main(int argc, char* argv[])
         if(LorR)
         {
             human.loadfromfile("human64x91.png");
+            human.render() ;
         }
         else
         {
             human.loadfromfile("human64x91flip.png");
+            human.render() ;
         }
-        human.render() ;
+
 
         //render
         SDL_RenderPresent( grenderer );
