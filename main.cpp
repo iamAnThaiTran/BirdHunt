@@ -7,9 +7,22 @@
 #include<math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <SDL_ttf.h>
+
 
 using namespace std ;
-
+string doi_so_sang_text(int a)
+{
+    string ans = "" ; int du ;
+    while(a >0)
+    {
+        du = a % 10 ;
+        char c = du +'0' ;
+        ans = c + ans ;
+        a  = a /10 ;
+    }
+    return ans ;
+}
 
 int random(int minN, int maxN){
  return minN + rand() % (maxN + 1 - minN);
@@ -20,11 +33,14 @@ const double SCREEN_HEIGHT = 600;
 SDL_Window *gwindow = NULL ;
 SDL_Renderer *grenderer = NULL ;
 SDL_Surface *gsurface = NULL ;
+TTF_Font *gfont = NULL;
+
 SDL_Event e ;
 void init()
 {
     gwindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     grenderer = SDL_CreateRenderer(gwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC) ;
+
     SDL_SetRenderDrawColor( grenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 }
 void close()
@@ -38,6 +54,7 @@ void close()
 	IMG_Quit();
 	SDL_Quit();
 }
+
 /* class Base */
 class Base
 {
@@ -52,15 +69,20 @@ public:
     void setBlendMode( SDL_BlendMode blending );
 		//Set alpha modulation
     void setAlpha( Uint8 alpha );
+
     void setrect(double x, double y) ;
+    double hp ;
+
     void render(SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE ) ;
     double get_pos_x(){return mPosx;}; double get_pos_y(){return mPosy;};double get_width(){return mWidth;}; double get_height(){return mHeight;};
+    void set_hp(int x) {hp = x;};
 
 
 
 protected:
     SDL_Texture *mTexture ;
     double mWidth , mHeight, mPosx, mPosy ;
+
 };
 void Base::free()
 {
@@ -131,6 +153,93 @@ void Base::render( SDL_Rect* clip, double angle, SDL_Point* center, SDL_Renderer
 	SDL_RenderCopyEx( grenderer, mTexture, clip, &renderQuad, angle, center, flip );
 
 }
+/* CLASS TEXT */
+class TextObject : public Base
+{
+public:
+    enum TextColor
+    {
+        RED_TEXT = 0 ,
+        WHITE_TEXT = 1 ,
+        BLACK_TEXT = 2 ,
+    };
+    TextObject() ;
+    ~TextObject() ;
+    void Set_Text(string path1) ;
+    void Set_Color(int type) ;
+    void loadFromRenderedText();
+    void Show_Text(){cout << text;} ;
+private:
+    string text ;
+    SDL_Color text_color ;
+};
+TextObject::TextObject()
+{
+    mTexture = NULL ;
+    mWidth = 0 ;
+    mHeight = 0 ;
+    mPosx = 500;
+    mPosy = 200 ;
+    text = "" ;
+    text_color.r = 255;
+    text_color.g = 255;
+    text_color.b = 255;
+
+}
+TextObject::~TextObject()
+{
+
+}
+void TextObject::loadFromRenderedText()
+{
+	//Get rid of preexisting texture
+	free();
+	//Render text surface
+	SDL_Surface* textSurface; textSurface = TTF_RenderText_Solid( gfont, text.c_str(), text_color);
+	if( textSurface != NULL )
+	{
+		//Create texture from surface pixels
+        mTexture = SDL_CreateTextureFromSurface( grenderer, textSurface );
+		if( mTexture == NULL )
+		{
+			printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
+		}
+		else
+		{
+			//Get image dimensions
+			mWidth = textSurface->w;
+			mHeight = textSurface->h;
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface( textSurface );
+	}
+	else cout << "LOI" ;
+}
+void TextObject::Set_Text(string path1)
+{
+    text = path1 ;
+}
+void TextObject::Set_Color(int type)
+{
+    if (type == RED_TEXT)
+  {
+    SDL_Color color = {255, 0, 0,0xFF};
+    text_color = color;
+  }
+  else if (type == WHITE_TEXT)
+  {
+    SDL_Color color = {255, 255, 255,0xFF};
+    text_color = color;
+  }
+  else
+  {
+    SDL_Color color = {0, 0, 0,0xFF};
+    text_color = color;
+  }
+
+}
+TextObject Score ;
 /*CLASS BULLET */
 class Bullet:public Base
 {
@@ -220,6 +329,7 @@ public:
 
 private:
     double mVelx, mVely ;
+
 
 
 
@@ -352,12 +462,13 @@ void Threat::threat_move()
         pos_cum = random(20,1180)/10*10 ;
 
     }
-    mPosx += -10 ;
+    mPosx += -5 ;
     mPosy = random(mPosy -3, mPosy +3) ;
     if(mPosx < 0)
     {
         mPosx = 1200 ;
         mPosy = random(20,200) ;
+        hp = 20 ;
         //ismove = false ;
     }
     if(mPosx == pos_cum)
@@ -546,6 +657,12 @@ bool CheckCollision1( MainObject object1,  Bullet object2)
 /* Main */
 int main(int argc, char* argv[])
 {
+    TTF_Init() ;
+    gfont = TTF_OpenFont("lazy.ttf",28 );
+    string s = "SCORE: " ; int sco = 0 ; char c = sco + '0' ;
+    string score_show = s + c ;
+
+    bool vao_game = false ;
     Base background ;
 
     Threat threat[3] ;
@@ -553,6 +670,7 @@ int main(int argc, char* argv[])
     for(int i = 0 ; i < 3 ; i ++)
         {
             threat[i].setrect(1200 + i *random(100,400),random(20,100)) ;
+            threat[i].set_hp(20) ;
 
         }
     srand(time(NULL));
@@ -561,6 +679,8 @@ int main(int argc, char* argv[])
     background.setrect(0,0) ;
     human.setrect(600,423) ;
     bool quit = false, LorR = false ;
+
+    /* loop */
     while(quit != true)
     {
         while(SDL_PollEvent(&e) != 0)
@@ -570,9 +690,29 @@ int main(int argc, char* argv[])
                 quit = true ;
             }
             LorR = human.lorr(e) ;
-            human.HandleAction(e) ;
+            if(vao_game == true)
+            {
+                human.HandleAction(e) ;
+            }
+
+             if(  e.type == SDL_MOUSEBUTTONDOWN )
+            {
+                int x, y ;
+                SDL_GetMouseState(&x,&y) ;
+                if(300 <= x && 500 >= x && 300 <=y && 500 >=y)
+                {
+                    vao_game = true ;
+                }
+            }
         }
         human.HandleMove() ;
+        if(vao_game == false)
+        {
+            background.loadfromfile("background_afternoon.bmp");
+            background.render() ;
+
+        }
+        if(vao_game){
 
 
         //clear screen
@@ -580,18 +720,25 @@ int main(int argc, char* argv[])
         SDL_RenderClear( grenderer );
 
         //loadbackground
-        background.loadfromfile("bg600-min_optimized.png") ;
+        background.loadfromfile("bg2.png") ;
         background.render() ;
+
+        // show score ;
+        Score.Set_Color(0) ;
+        Score.Set_Text(score_show) ;
+        Score.setrect(500,200) ;
+        Score.loadFromRenderedText();
+        Score.render();
 
         //loadnhanvat
         if(LorR)
         {
-            human.loadfromfile("mainnu.png");
+            human.loadfromfile("mann.png");
 
         }
         else
         {
-            human.loadfromfile("mainnu.png");
+            human.loadfromfile("mann.png");
 
         }
         human.render() ;
@@ -610,7 +757,7 @@ int main(int argc, char* argv[])
             threat[i].Bul[j].render() ;
             if(CheckCollision1(human,threat[i].Bul[j]))
             {
-                SDL_ShowSimpleMessageBox(0,"gameover","gameover",gwindow) ;
+
             }
         }
         }
@@ -622,12 +769,20 @@ int main(int argc, char* argv[])
             human.Bul[i].loadfromfile("sphere.png") ;
             human.Bul[i].set_up_or_down(true);
             human.Bul[i].BulletMove();
+            human.Bul[i].set_hp(10) ;
             if(human.Bul[i].get_move())
             human.Bul[i].render() ;
             if (CheckCollision(threat[2],human.Bul[i]))
             {
                 //cout << "da va cham" << endl ;
                 human.Bul.erase(human.Bul.begin() + i ) ;
+                threat[2].hp -= human.Bul[i].hp ;
+                if(threat[2].hp == 0)
+                {
+                    sco +=10 ;
+                    threat[2].hp = 20 ;
+                }
+                score_show = s + doi_so_sang_text(sco)  ;
             }
 
             if(!human.Bul[i].get_move())
@@ -638,8 +793,10 @@ int main(int argc, char* argv[])
 
 
         }
+        }
        //render
         SDL_RenderPresent( grenderer );
     }
     close() ;
+    return 0  ;
 }
