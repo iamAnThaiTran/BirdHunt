@@ -8,9 +8,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <SDL_ttf.h>
+#include<fstream>
 
 
 using namespace std ;
+float absd(float x)
+{
+    if(x > 0.0) return x ;
+    return - x ;
+}
 string doi_so_sang_text(int a)
 {
     string ans = "" ; int du ;
@@ -28,12 +34,15 @@ int random(int minN, int maxN){
  return minN + rand() % (maxN + 1 - minN);
 }
 
-const double SCREEN_WIDTH = 1200;
-const double SCREEN_HEIGHT = 600;
+const float SCREEN_WIDTH = 1200;
+const float SCREEN_HEIGHT = 600;
+int  vel_chim = 0 ;
 SDL_Window *gwindow = NULL ;
 SDL_Renderer *grenderer = NULL ;
 SDL_Surface *gsurface = NULL ;
 TTF_Font *gfont = NULL;
+
+
 
 SDL_Event e ;
 void init()
@@ -70,18 +79,18 @@ public:
 		//Set alpha modulation
     void setAlpha( Uint8 alpha );
 
-    void setrect(double x, double y) ;
-    double hp ;
+    void setrect(float x, float y) ;
+    float hp ;
 
-    void render(SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE ) ;
-    double get_pos_x(){return mPosx;}; double get_pos_y(){return mPosy;};double get_width(){return mWidth;}; double get_height(){return mHeight;};
+    void render(SDL_Rect* clip = NULL, float angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE ) ;
+    float get_pos_x(){return mPosx;}; float get_pos_y(){return mPosy;};float get_width(){return mWidth;}; float get_height(){return mHeight;};
     void set_hp(int x) {hp = x;};
 
 
 
 protected:
     SDL_Texture *mTexture ;
-    double mWidth , mHeight, mPosx, mPosy ;
+    float mWidth , mHeight, mPosx, mPosy ;
 
 };
 void Base::free()
@@ -133,12 +142,12 @@ void Base::loadfromfile(string path)
     mTexture = image_texture ;
     SDL_FreeSurface(image_surface);
 }
-void Base::setrect(double x, double y)
+void Base::setrect(float x, float y)
 {
     mPosx = x ;
     mPosy = y ;
 }
-void Base::render( SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void Base::render( SDL_Rect* clip, float angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { mPosx, mPosy, mWidth, mHeight };
@@ -240,6 +249,8 @@ void TextObject::Set_Color(int type)
 
 }
 TextObject Score ;
+
+
 /*CLASS BULLET */
 class Bullet:public Base
 {
@@ -250,11 +261,15 @@ public:
     void set_up_or_down(bool l);
     void MouseAction() ;
     void BulletMove() ;
-    void SetVel(double x , double y ) ;
+    void SetVel(float x , float y ) ;
+    bool da_lay_muctieu ;
+    void get_muctieu(float x, float y) {muctieu_x = x ; muctieu_y = y ;}
+
 private:
     bool ismove, up_or_down ;
-    double vel_bullet_x ;
-    double vel_bullet_y ;
+    float vel_bullet_x ;
+    float vel_bullet_y ;
+    float muctieu_x, muctieu_y ;
 
 
 
@@ -270,13 +285,16 @@ Bullet::Bullet()
     mPosx = 1200 ;
     mPosy = 0 ;
     ismove = true  ;
+    da_lay_muctieu = false ;
+    muctieu_x = 0 ;
+    muctieu_y = 0 ;
 
 }
 Bullet::~Bullet()
 {
 
 }
-void Bullet::SetVel(double x, double y)
+void Bullet::SetVel(float x, float y)
 {
     vel_bullet_x = x ;
     vel_bullet_y = y ;
@@ -295,7 +313,7 @@ void Bullet::BulletMove()
     {
         mPosx += vel_bullet_x ;
         mPosy += vel_bullet_y ;
-        if(mPosx > 1200 || mPosx <0 || mPosy > 500 || mPosy <0)
+        if(mPosx > 1200 || mPosx <0 || mPosy > 600 || mPosy <0)
         {
             ismove = false ;
 
@@ -303,12 +321,17 @@ void Bullet::BulletMove()
     }
     else
     {
-        mPosy += 10 ;
-        if(mPosx > 1200 || mPosx <0  || mPosy <0 || mPosy > 600)
+
+        if(mPosx > 1200 || mPosx <0  || mPosy <0 || mPosy > 800)
         {
             ismove = false ;
 
         }
+
+        mPosx += vel_bullet_x ;
+        mPosy += vel_bullet_y;
+
+
     }
 }
 
@@ -322,13 +345,13 @@ public:
 
     bool lorr(SDL_Event &e) ;
 
-    double vel = 5 ;
+    float vel = 5 ;
     void HandleAction(SDL_Event &e) ;
     void HandleMove() ;
     vector<Bullet> Bul ;
 
 private:
-    double mVelx, mVely ;
+    float mVelx, mVely ;
 
 
 
@@ -368,17 +391,18 @@ void MainObject::HandleAction( SDL_Event &e )
 
         case SDLK_UP:
             {
-                for(double i = 1 ; i <= 100 ; i++)
+                for(float i = 1 ; i <= 100 ; i++)
                 {
                     mPosy -= 1 ;
                 }
                 break;
             }
             //case SDLK_DOWN: mVely += vel; break;
-            case SDLK_LEFT: mVelx -= vel; break;
-            case SDLK_RIGHT: mVelx += vel; break;
+            case SDLK_LEFT: mVelx +=10 ; break;
+            case SDLK_RIGHT: mVelx -=10; break;
         }
     }
+
     //If a key was released
     else if( e.type == SDL_KEYUP && e.key.repeat == 0 )
     {
@@ -388,25 +412,26 @@ void MainObject::HandleAction( SDL_Event &e )
 
             case SDLK_UP:
                 {
-                    for(double i =1 ; i <= 100 ; i++)
+                    for(float i =1 ; i <= 100 ; i++)
                     {
                         mPosy += 1 ;
                     }
                     break;
                 };
             //case SDLK_DOWN: mVely -= vel; break;
-            case SDLK_LEFT: mVelx += vel; break;
-            case SDLK_RIGHT: mVelx -= vel; break;
+            case SDLK_LEFT: mVelx -=10 ; break;
+            case SDLK_RIGHT: mVelx += 10  ; break;
         }
     }
+
     else if(  e.type == SDL_MOUSEBUTTONDOWN )
     {
         int x1, y1;
-        SDL_GetMouseState(&x1,&y1) ; double x = x1 , y = y1 ;
+        SDL_GetMouseState(&x1,&y1) ; float x = x1 , y = y1 ;
         Bullet new_bul ;
         new_bul.setrect(mPosx,mPosy) ;
         new_bul.SetVel((x-mPosx)/abs(x-mPosx)*10  , (y-mPosy)/abs(x-mPosx)*10) ;
-        //cout << (x-mPosx)/abs(x-mPosx)*10  << " " <<  (y-mPosy)/abs(x-mPosx)*10 << endl ;
+        cout << (x-mPosx)/abs(x-mPosx)*10  << " " <<  (y-mPosy)/abs(x-mPosx)*10 << endl ;
 
         Bul.push_back(new_bul) ;
 
@@ -438,17 +463,22 @@ public:
     ~Threat() ;
     void threat_move() ;
     vector<Bullet> Bul ;
-    int get_pos_cum() {return pos_cum;}
+    void set_vector_move(bool l) {move_left_or_right = l ; }
+    //int get_pos_cum() {return pos_cum;}
 private:
-    double vel_threat_x ;
-    double vel_threat_y ;
-    int pos_cum ;
+    float vel_threat_x ;
+    float vel_threat_y ;
+    int pos_cum1, pos_cum2, pos_cum3 ;
+    bool move_left_or_right ;
 
 };
 Threat::Threat()
 {
     mPosx = 1200 ;
     mPosy = 200 ;
+    pos_cum1 = 1200 ;
+    pos_cum2 = 1200 ;
+    pos_cum3 = 1200 ;
 }
 Threat::~Threat()
 {
@@ -457,12 +487,15 @@ Threat::~Threat()
 void Threat::threat_move()
 {
 
+if(move_left_or_right == false ){
     if(mPosx == 0)
     {
-        pos_cum = random(20,1180)/10*10 ;
+        pos_cum1 = random(0,1200)/5*5 ;
+        pos_cum2 = random(0,1200)/5*5 ;
+        pos_cum3 = random(0,1200)/5*5 ;
 
     }
-    mPosx += -5 ;
+    mPosx += -5 + vel_chim ;
     mPosy = random(mPosy -3, mPosy +3) ;
     if(mPosx < 0)
     {
@@ -471,7 +504,33 @@ void Threat::threat_move()
         hp = 20 ;
         //ismove = false ;
     }
-    if(mPosx == pos_cum)
+    if(mPosx == pos_cum1 ||mPosx == pos_cum2  )
+    {
+        Bullet new_bul ;
+        new_bul.setrect(mPosx, mPosy) ;
+        new_bul.set_up_or_down(false) ;
+        Bul.push_back(new_bul) ;
+    }
+}
+else
+{
+    if(mPosx == 0)
+    {
+        pos_cum1 = random(0,1200)/5*5 ;
+        pos_cum2 = random(0,1200)/5*5 ;
+        pos_cum3 = random(0,1200)/5*5 ;
+
+    }
+    mPosx += 5 + vel_chim ;
+    mPosy = random(mPosy -3, mPosy +3) ;
+    if(mPosx >1200)
+    {
+        mPosx = 00 ;
+        mPosy = random(20,200) ;
+        hp = 20 ;
+        //ismove = false ;
+    }
+    if(mPosx == pos_cum1 ||mPosx == pos_cum2 )
     {
         Bullet new_bul ;
         new_bul.setrect(mPosx, mPosy) ;
@@ -480,12 +539,15 @@ void Threat::threat_move()
     }
 
 }
+
+
+}
 bool CheckCollision( Threat object1,  Bullet object2)
 {
-  double left_a = object1.get_pos_x();
-  double right_a = object1.get_pos_x() + object1.get_width();
-  double top_a = object1.get_pos_y();
-  double bottom_a = object1.get_pos_y() + object1.get_height();
+  float left_a = object1.get_pos_x();
+  float right_a = object1.get_pos_x() + object1.get_width();
+  float top_a = object1.get_pos_y();
+  float bottom_a = object1.get_pos_y() + object1.get_height();
 
   int left_b = object2.get_pos_x();
   int right_b = object2.get_pos_x() + object2.get_width();
@@ -568,10 +630,10 @@ bool CheckCollision( Threat object1,  Bullet object2)
 }
 bool CheckCollision1( MainObject object1,  Bullet object2)
 {
-  double left_a = object1.get_pos_x();
-  double right_a = object1.get_pos_x() + object1.get_width();
-  double top_a = object1.get_pos_y();
-  double bottom_a = object1.get_pos_y() + object1.get_height();
+  float left_a = object1.get_pos_x();
+  float right_a = object1.get_pos_x() + object1.get_width();
+  float top_a = object1.get_pos_y();
+  float bottom_a = object1.get_pos_y() + object1.get_height();
 
   int left_b = object2.get_pos_x();
   int right_b = object2.get_pos_x() + object2.get_width();
@@ -652,24 +714,64 @@ bool CheckCollision1( MainObject object1,  Bullet object2)
 
   return false;
 }
-
+int level, so_luong_chim, gioi_han_tren ;
+vector<string> list_chim {"chim_nau.png","chim_vang.png","chim_bom.png","chim_xanh.png","pig_ply.png"};
 
 /* Main */
 int main(int argc, char* argv[])
 {
+    ifstream ip ("du_lieu_game.txt") ;
+    ofstream op ("du_lieu_game1.txt") ;
+    if(ip)
+    {
+        cout << " success " ;
+    }
+    ip >> level ;
+    cout << level ;
+
+    gioi_han_tren = 1 ;
+    so_luong_chim = 2 + 2 * level ;
+
+    string chim_at_level[so_luong_chim] ;
+    for(int i = 0 ; i < so_luong_chim ; i++)
+    {
+        if(i % 2 == 0 )
+        {
+            chim_at_level [i] = list_chim[gioi_han_tren - 1] ;
+        }
+        else
+        {
+            chim_at_level [i] = list_chim[gioi_han_tren] ;
+        }
+    }
+
+
+
+
+
     TTF_Init() ;
-    gfont = TTF_OpenFont("lazy.ttf",28 );
+    gfont = TTF_OpenFont("Xerox Sans Serif Wide Bold.ttf",28 );
     string s = "SCORE: " ; int sco = 0 ; char c = sco + '0' ;
     string score_show = s + c ;
 
     bool vao_game = false ;
     Base background ;
 
-    Threat threat[3] ;
-    threat[0] = *new Threat ;threat[1] = *new Threat ;threat[2] = *new Threat ;
-    for(int i = 0 ; i < 3 ; i ++)
+    Threat threat[so_luong_chim] ;
+    //threat[0] = *new Threat ;threat[1] = *new Threat ;threat[2] = *new Threat ;
+    for(int i = 0 ; i < so_luong_chim ; i ++)
         {
-            threat[i].setrect(1200 + i *random(100,400),random(20,100)) ;
+            if(i %2 == 0)
+            {
+                threat[i].set_vector_move(false) ;
+                threat[i].setrect(1200 + i *random(100,400),random(20,100)) ;
+            }
+            else
+            {
+                threat[i].set_vector_move(true) ;
+                threat[i].setrect(0 - i *random(100,400),random(20,100)) ;
+            }
+
             threat[i].set_hp(20) ;
 
         }
@@ -699,7 +801,7 @@ int main(int argc, char* argv[])
             {
                 int x, y ;
                 SDL_GetMouseState(&x,&y) ;
-                if(300 <= x && 500 >= x && 300 <=y && 500 >=y)
+                if(500 <= x && 700 >= x && 50 <=y && 150 >=y)
                 {
                     vao_game = true ;
                 }
@@ -708,7 +810,7 @@ int main(int argc, char* argv[])
         human.HandleMove() ;
         if(vao_game == false)
         {
-            background.loadfromfile("background_afternoon.bmp");
+            background.loadfromfile("menu1-min.png");
             background.render() ;
 
         }
@@ -720,50 +822,65 @@ int main(int argc, char* argv[])
         SDL_RenderClear( grenderer );
 
         //loadbackground
-        background.loadfromfile("bg2.png") ;
+
+        background.loadfromfile("bg600-min.png") ;
+        background.setrect(0,0) ;
         background.render() ;
+        //cout << scrolling << " ";
 
         // show score ;
         Score.Set_Color(0) ;
-        Score.Set_Text(score_show) ;
-        Score.setrect(500,200) ;
+        Score.Set_Text("||||||||||||") ;
+        Score.setrect(20,20) ;
         Score.loadFromRenderedText();
         Score.render();
 
         //loadnhanvat
         if(LorR)
         {
-            human.loadfromfile("mann.png");
+            human.loadfromfile("guy.png");
 
         }
         else
         {
-            human.loadfromfile("mann.png");
+            human.loadfromfile("guy.png");
 
         }
         human.render() ;
 
-        for(int i = 0 ; i < 3 ; i ++)
+        for(int i = 0 ; i < so_luong_chim; i ++)
         {
-            threat[i].loadfromfile("rsz_conchim.png") ;
+            threat[i].loadfromfile(chim_at_level[i]) ;
             threat[i].threat_move() ;
             threat[i].render() ;
 
 
         for(int j = 0 ; j < threat[i].Bul.size() ; j ++ )
         {
-            threat[i].Bul[j].loadfromfile("sphere.png") ;
-            threat[i].Bul[j].BulletMove() ;
-            threat[i].Bul[j].render() ;
-            if(CheckCollision1(human,threat[i].Bul[j]))
+            threat[i].Bul[j].loadfromfile("egg.png") ;
+            if(threat[i].Bul[j].da_lay_muctieu == false)
             {
 
+              threat[i].Bul[j].get_muctieu(human.get_pos_x(),human.get_pos_y());
+              threat[i].Bul[j].SetVel((human.get_pos_x()- threat[i].Bul[j].get_pos_x())/absd(human.get_pos_x() -  threat[i].Bul[j].get_pos_x())*5 , (human.get_pos_y() -  threat[i].Bul[j].get_pos_y())/absd(human.get_pos_x()-threat[i].Bul[j].get_pos_x())*5) ;
+              threat[i].Bul[j].da_lay_muctieu = true ;
+
+
             }
+            threat[i].Bul[j].BulletMove() ;
+
+            threat[i].Bul[j].render() ;
+            if(CheckCollision1(human,threat[i].Bul[j]) == true || threat[i].Bul[j].get_move() == false)
+            {
+                threat[i].Bul.erase(threat[i].Bul.begin() + j ) ;
+
+            }
+            //cout << j << " " << threat[i].Bul[j].get_pos_x() << endl ;
         }
         }
 
 
-        for(double i = 0 ; i < human.Bul.size() ; i++)
+        for(float i = 0 ; i < human.Bul.size() ; i++)
         {
 
             human.Bul[i].loadfromfile("sphere.png") ;
@@ -781,6 +898,7 @@ int main(int argc, char* argv[])
                 {
                     sco +=10 ;
                     threat[2].hp = 20 ;
+                    threat[2].setrect(1800,random(20,100)) ;
                 }
                 score_show = s + doi_so_sang_text(sco)  ;
             }
@@ -793,10 +911,17 @@ int main(int argc, char* argv[])
 
 
         }
+        // show score ;
+        Score.Set_Color(0) ;
+        Score.Set_Text("[||||||||||||]") ;
+        Score.setrect(500,200) ;
+        Score.loadFromRenderedText();
+        Score.render();
         }
        //render
         SDL_RenderPresent( grenderer );
     }
     close() ;
+    op << level ;
     return 0  ;
 }
