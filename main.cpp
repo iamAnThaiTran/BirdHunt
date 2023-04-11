@@ -17,6 +17,42 @@ float absd(float x)
     if(x > 0.0) return x ;
     return - x ;
 }
+int gioihan(int x)
+{
+    switch(x)
+    {
+        case 1 : return 0 ; break ;
+        case 2 : return 1 ; break ;
+        case 3 : return 1 ; break ;
+        case 4 : return 2 ; break ;
+        case 5 : return 2 ; break ;
+        case 6 : return 3 ; break ;
+        case 7 : return 3 ; break ;
+        case 8 : return 4 ; break ;
+        case 9 : return 4 ; break ;
+       // case 10 : return 0 ; break ;
+
+    }
+}
+
+int soluongchim(int x)
+{
+    switch(x)
+    {
+        case 1 : return 8 ; break ;
+        case 2 : return 10 ; break ;
+        case 3 : return 6 ; break ;
+        case 4 : return 14 ; break ;
+        case 5 : return 12 ; break ;
+        case 6 : return 10 ; break ;
+        case 7 : return 10 ; break ;
+        case 8 : return 22 ; break ;
+        case 9 : return 10 ; break ;
+       // case 10 : return 0 ; break ;
+
+    }
+}
+
 string doi_so_sang_text(int a)
 {
     string ans = "" ; int du ;
@@ -80,7 +116,7 @@ public:
     void setAlpha( Uint8 alpha );
 
     void setrect(float x, float y) ;
-    float hp ;
+    int hp ;
 
     void render(SDL_Rect* clip = NULL, float angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE ) ;
     float get_pos_x(){return mPosx;}; float get_pos_y(){return mPosy;};float get_width(){return mWidth;}; float get_height(){return mHeight;};
@@ -363,20 +399,36 @@ MainObject::MainObject()
     mPosy = 423 ;
     mPosx = 600 ;
     mVely = 0 ;
+    hp = 100  ;
 }
 MainObject::~MainObject()
 {
 }
 bool MainObject::lorr(SDL_Event &e)
 {
+    //if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
     if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
-    if( e.type == SDL_KEYDOWN )
     {
         //Adjust the velocity
-        switch( e.key.keysym.sym )
+        if(e.key.keysym.sym == SDLK_a )
         {
-            case SDLK_LEFT: return false; break;
-            case SDLK_RIGHT: return true; break;
+            return false ;
+        }
+        else if(e.key.keysym.sym == SDLK_d)
+        {
+            return true ;
+        }
+    }
+    if(e.type == SDL_KEYUP && e.key.repeat == 0)
+           {
+        //Adjust the velocity
+        if(e.key.keysym.sym == SDLK_a)
+        {
+            return false ;
+        }
+        else if(e.key.keysym.sym == SDLK_d)
+        {
+            return true ;
         }
     }
 }
@@ -398,8 +450,8 @@ void MainObject::HandleAction( SDL_Event &e )
                 break;
             }
             //case SDLK_DOWN: mVely += vel; break;
-            case SDLK_LEFT: mVelx +=10 ; break;
-            case SDLK_RIGHT: mVelx -=10; break;
+            case SDLK_a: mVelx -=10 ; break;
+            case SDLK_d: mVelx +=10; break;
         }
     }
 
@@ -419,8 +471,8 @@ void MainObject::HandleAction( SDL_Event &e )
                     break;
                 };
             //case SDLK_DOWN: mVely -= vel; break;
-            case SDLK_LEFT: mVelx -=10 ; break;
-            case SDLK_RIGHT: mVelx += 10  ; break;
+            case SDLK_a: mVelx +=10 ; break;
+            case SDLK_d: mVelx -= 10  ; break;
         }
     }
 
@@ -431,7 +483,7 @@ void MainObject::HandleAction( SDL_Event &e )
         Bullet new_bul ;
         new_bul.setrect(mPosx,mPosy) ;
         new_bul.SetVel((x-mPosx)/abs(x-mPosx)*10  , (y-mPosy)/abs(x-mPosx)*10) ;
-        cout << (x-mPosx)/abs(x-mPosx)*10  << " " <<  (y-mPosy)/abs(x-mPosx)*10 << endl ;
+        //cout << (x-mPosx)/abs(x-mPosx)*10  << " " <<  (y-mPosy)/abs(x-mPosx)*10 << endl ;
 
         Bul.push_back(new_bul) ;
 
@@ -464,6 +516,7 @@ public:
     void threat_move() ;
     vector<Bullet> Bul ;
     void set_vector_move(bool l) {move_left_or_right = l ; }
+    bool get_vector() {return move_left_or_right ;}
     //int get_pos_cum() {return pos_cum;}
 private:
     float vel_threat_x ;
@@ -492,14 +545,14 @@ if(move_left_or_right == false ){
     {
         pos_cum1 = random(0,1200)/5*5 ;
         pos_cum2 = random(0,1200)/5*5 ;
-        pos_cum3 = random(0,1200)/5*5 ;
+       // pos_cum3 = random(0,1200)/5*5 ;
 
     }
     mPosx += -5 + vel_chim ;
     mPosy = random(mPosy -3, mPosy +3) ;
     if(mPosx < 0)
     {
-        mPosx = 1200 ;
+        mPosx = 3000;
         mPosy = random(20,200) ;
         hp = 20 ;
         //ismove = false ;
@@ -518,14 +571,14 @@ else
     {
         pos_cum1 = random(0,1200)/5*5 ;
         pos_cum2 = random(0,1200)/5*5 ;
-        pos_cum3 = random(0,1200)/5*5 ;
+      //  pos_cum3 = random(0,1200)/5*5 ;
 
     }
     mPosx += 5 + vel_chim ;
     mPosy = random(mPosy -3, mPosy +3) ;
     if(mPosx >1200)
     {
-        mPosx = 00 ;
+        mPosx = -1800 ;
         mPosy = random(20,200) ;
         hp = 20 ;
         //ismove = false ;
@@ -714,12 +767,17 @@ bool CheckCollision1( MainObject object1,  Bullet object2)
 
   return false;
 }
-int level, so_luong_chim, gioi_han_tren ;
-vector<string> list_chim {"chim_nau.png","chim_vang.png","chim_bom.png","chim_xanh.png","pig_ply.png"};
+
+Base pause ;
+TextObject text_level , text_hp, text_task ;
+bool win_task = false, pause_game = false ;
+int level, so_luong_chim, gioi_han_tren, kiem_soat_gioi_han, task ;
+vector<string> list_chim {"chim_nau.png","chim_vang.png","chim_bom.png","chim_xanh.png","pig_fly.png"};
 
 /* Main */
 int main(int argc, char* argv[])
 {
+    /* xu ly level */
     ifstream ip ("du_lieu_game.txt") ;
     ofstream op ("du_lieu_game1.txt") ;
     if(ip)
@@ -727,17 +785,31 @@ int main(int argc, char* argv[])
         cout << " success " ;
     }
     ip >> level ;
-    cout << level ;
 
-    gioi_han_tren = 1 ;
-    so_luong_chim = 2 + 2 * level ;
+    /* kiem_soat_chim */
+    if(level % 2 == 0)
+    {
+        kiem_soat_gioi_han = 0 ;
+    }
+    else
+    {
+        kiem_soat_gioi_han = 1 ;
+    }
+
+    task = 5 + level * 5 ;
+
+
+
+
+    gioi_han_tren = gioihan(level)   ;
+    so_luong_chim = soluongchim(level)  ;
 
     string chim_at_level[so_luong_chim] ;
     for(int i = 0 ; i < so_luong_chim ; i++)
     {
         if(i % 2 == 0 )
         {
-            chim_at_level [i] = list_chim[gioi_han_tren - 1] ;
+            chim_at_level [i] = list_chim[gioi_han_tren - 1 + kiem_soat_gioi_han] ;
         }
         else
         {
@@ -751,8 +823,8 @@ int main(int argc, char* argv[])
 
     TTF_Init() ;
     gfont = TTF_OpenFont("Xerox Sans Serif Wide Bold.ttf",28 );
-    string s = "SCORE: " ; int sco = 0 ; char c = sco + '0' ;
-    string score_show = s + c ;
+
+
 
     bool vao_game = false ;
     Base background ;
@@ -791,12 +863,48 @@ int main(int argc, char* argv[])
             {
                 quit = true ;
             }
-            LorR = human.lorr(e) ;
+
             if(vao_game == true)
             {
                 human.HandleAction(e) ;
-            }
+                if(e.type != NULL)
+                LorR = human.lorr(e) ;
+                if(pause_game == false){
+                if(e.type == SDL_MOUSEBUTTONDOWN)
+                {
+                    int x, y ;
+                    SDL_GetMouseState(&x,&y) ;
+                    {
+                        if(1054 <= x && 1200 >= x && 0 <=y && 80 >=y)
+                        {
+                            pause_game = true ;
+                        }
+                    }
 
+                }
+                }
+                else
+                {
+                    if(e.type == SDL_MOUSEBUTTONDOWN)
+                {
+                    int x, y ;
+                    SDL_GetMouseState(&x,&y) ;
+                    {
+                        if(400 <= x && 600>= x && 30 <=y && 80 >=y)
+                        {
+                            pause_game = false;
+                        }
+                        else if(400 <=x && 600 >=x &&200 <=y && 300 <=y  )
+                        {
+                            quit = true ;
+                        }
+                    }
+
+                }
+                }
+
+            }
+            // xu ly vao game hay khong
              if(  e.type == SDL_MOUSEBUTTONDOWN )
             {
                 int x, y ;
@@ -808,6 +916,7 @@ int main(int argc, char* argv[])
             }
         }
         human.HandleMove() ;
+
         if(vao_game == false)
         {
             background.loadfromfile("menu1-min.png");
@@ -826,26 +935,40 @@ int main(int argc, char* argv[])
         background.loadfromfile("bg600-min.png") ;
         background.setrect(0,0) ;
         background.render() ;
-        //cout << scrolling << " ";
 
-        // show score ;
-        Score.Set_Color(0) ;
-        Score.Set_Text("||||||||||||") ;
-        Score.setrect(20,20) ;
-        Score.loadFromRenderedText();
-        Score.render();
+        // pause game
+        pause.loadfromfile("pause1.png") ;
+        pause.setrect(1000,0) ;
+        pause.render() ;
+
+        // level ;
+        text_level.Set_Color(1) ;
+        text_level.Set_Text("LEVEL " + doi_so_sang_text(level)) ;
+        text_level.setrect(20,20) ;
+        text_level.loadFromRenderedText() ;
+        text_level.render() ;
+
+        if(pause_game)
+        {
+            background.loadfromfile("menu_pause.png");
+            background.setrect(400,30) ;
+            background.render() ;
+        }
+        else{
+
 
         //loadnhanvat
-        if(LorR)
+        if(LorR == true )
         {
             human.loadfromfile("guy.png");
 
         }
         else
         {
-            human.loadfromfile("guy.png");
+            human.loadfromfile("guy_flip.png");
 
         }
+        //cout << LorR << endl ;
         human.render() ;
 
         for(int i = 0 ; i < so_luong_chim; i ++)
@@ -875,53 +998,73 @@ int main(int argc, char* argv[])
                 threat[i].Bul.erase(threat[i].Bul.begin() + j ) ;
 
             }
-            //cout << j << " " << threat[i].Bul[j].get_pos_x() << endl ;
-        }
+
         }
 
 
-        for(float i = 0 ; i < human.Bul.size() ; i++)
+        }
+            for(int k = 0 ; k < human.Bul.size() ; k++)
         {
 
-            human.Bul[i].loadfromfile("sphere.png") ;
-            human.Bul[i].set_up_or_down(true);
-            human.Bul[i].BulletMove();
-            human.Bul[i].set_hp(10) ;
-            if(human.Bul[i].get_move())
-            human.Bul[i].render() ;
-            if (CheckCollision(threat[2],human.Bul[i]))
+            human.Bul[k].loadfromfile("sphere.png") ;
+            human.Bul[k].set_up_or_down(true);
+            human.Bul[k].BulletMove();
+            human.Bul[k].set_hp(10) ;
+            if(human.Bul[k].get_move())
+            human.Bul[k].render() ;
+            for(int i = 0 ; i < so_luong_chim ; i ++ ){
+            if (CheckCollision(threat[i],human.Bul[k]))
             {
                 //cout << "da va cham" << endl ;
-                human.Bul.erase(human.Bul.begin() + i ) ;
-                threat[2].hp -= human.Bul[i].hp ;
-                if(threat[2].hp == 0)
+                human.Bul.erase(human.Bul.begin() + k ) ;
+                threat[i].hp -= human.Bul[k].hp ;
+                if(threat[i].hp == 0)
                 {
-                    sco +=10 ;
-                    threat[2].hp = 20 ;
-                    threat[2].setrect(1800,random(20,100)) ;
+
+                    threat[i].hp = 20 ;
+                    if(threat[i].get_vector() == false )
+                    threat[i].setrect(3000,random(20,100)) ;
+                    else threat[i].setrect(-1800,random(20,100)) ;
+                    task -- ;
                 }
-                score_show = s + doi_so_sang_text(sco)  ;
+
+            }
             }
 
-            if(!human.Bul[i].get_move())
+            if(!human.Bul[k].get_move())
             {
-                 human.Bul.erase(human.Bul.begin() + i ) ;
+                 human.Bul.erase(human.Bul.begin() + k ) ;
                  //cout << "daxoa va conlai "<< human.Bul.size() << endl ;
             }
 
 
         }
+
+
         // show score ;
-        Score.Set_Color(0) ;
-        Score.Set_Text("[||||||||||||]") ;
-        Score.setrect(500,200) ;
-        Score.loadFromRenderedText();
-        Score.render();
+        text_hp.Set_Color(1) ;
+        text_hp.Set_Text("HP " + doi_so_sang_text(human.hp)) ;
+        text_hp.setrect(20,60) ;
+        text_hp.loadFromRenderedText() ;
+        text_hp.render() ;
+
+        text_task.Set_Color(1) ;
+        text_task.Set_Text("TASK REMAIN " + doi_so_sang_text(task)) ;
+        text_task.setrect(20,90) ;
+        text_task.loadFromRenderedText() ;
+        text_task.render() ;
+        }
         }
        //render
         SDL_RenderPresent( grenderer );
     }
     close() ;
     op << level ;
+
+    ifstream ip1 ("du_lieu_game1.txt") ;
+    ofstream op1 ("du_lieu_game.txt") ;
+    //level ++ ;
+    ip1 >> level ;
+    op1 << level ;
     return 0  ;
 }
