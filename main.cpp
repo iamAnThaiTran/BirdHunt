@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #include <fstream>
 using namespace std;
 float absd(float x)
@@ -16,12 +17,13 @@ float absd(float x)
 	return -x;
 }
 
-int lay_ra_o( float x1)
+int lay_ra_o(float x1)
 {
-    int x = x1 ;
-    return (x + 30) / 60  ;
+	int x = x1;
+	return (x + 30) / 60;
 }
-int bien_duoi = 415 ,bien_ngang_left = 0, bien_ngang_right = 1200;
+
+int bien_duoi = 415, bien_ngang_left = 0, bien_ngang_right = 1200;
 
 int gioihan(int x)
 {
@@ -119,6 +121,14 @@ int vel_chim = 0, so_luong_dan;
 SDL_Window *gwindow = NULL;
 SDL_Renderer *grenderer = NULL;
 SDL_Surface *gsurface = NULL;
+
+Mix_Music *gMusic = NULL;
+
+//The sound effects that will be used
+Mix_Chunk *gGun = NULL;
+Mix_Chunk *gBirdYell = NULL;
+Mix_Chunk *gMedium = NULL;
+Mix_Chunk *gLow = NULL;
 TTF_Font *gfont = NULL;
 
 SDL_Event e;
@@ -128,6 +138,10 @@ void init()
 	grenderer = SDL_CreateRenderer(gwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	SDL_SetRenderDrawColor(grenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+	//gMusic = Mix_LoadMUS("chimbay1s.mp3");
+	gGun = Mix_LoadWAV("tieng_sung.mp3");
+	gBirdYell = Mix_LoadWAV("vu_no_chim.mp3");
 }
 
 void close()
@@ -156,6 +170,7 @@ class Base
 	void setBlendMode(SDL_BlendMode blending);
 	//Set alpha modulation
 	void setAlpha(Uint8 alpha);
+	int trang_thai_bat_tat = 0;
 
 	void setrect(float x, float y);
 	int hp;
@@ -274,14 +289,6 @@ void Base::render(SDL_Rect *clip, float angle, SDL_Point *center, SDL_RendererFl
 
 }
 
-class Map_game
-{
-public:
-    Map_game() ;
-    ~Map_game() ;
-private:
-
-};
 /*CLASS TEXT */
 class TextObject: public Base
 {
@@ -381,38 +388,35 @@ void TextObject::Set_Color(int type)
 
 TextObject Score;
 
-
-/* CLASS ITEM */
-class Item :public Base
+/*CLASS ITEM */
+class Item: public Base
 {
-public:
-    Item() ;
-    ~Item(){;} ;
-    int ten_item ;
-    void item_move() ;
-    Uint32 time_ton_tai ;
-    //int set_item () ;
-private:
-    int item_bien ;
+	public: Item();~Item()
+	{;
+	};
 
-
+	int ten_item;
+	void item_move();
+	Uint32 time_ton_tai;
+	//int set_item () ;
+	private: int item_bien;
 
 };
+
 Item::Item()
 {
-    item_bien = 425 ;
-    ten_item = 0 ;
-    time_ton_tai  = 0 ;
+	item_bien = 425;
+	ten_item = 0;
+	time_ton_tai = 0;
 }
 
 void Item::item_move()
 {
-    if (mPosy < item_bien)
-    {
-        mPosy += 5 ;
-    }
+	if (mPosy < item_bien)
+	{
+		mPosy += 5;
+	}
 }
-
 
 /*CLASS BULLET */
 class Bullet: public Base
@@ -492,11 +496,13 @@ void Bullet::BulletMove()
 		mPosy += vel_bullet_y;
 	}
 }
+
 /*claAzdxszsaXC `XX SRRZAQSXDCss hieu ung  */
 ///
 class Hieu_ung: public Base
 {
 	public: Hieu_ung();
+	int frame  = 0 ;
 
 	void render_sprite(float angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 	void set_frame(int f)
@@ -510,48 +516,51 @@ class Hieu_ung: public Base
 	SDL_Rect clip[7];
 
 };
-
 Hieu_ung::Hieu_ung()
+{
+
+}
+void Hieu_ung::set_clip()
 {
 	clip[0].x = 0;
 	clip[0].y = 0;
-	clip[0].w = 480 / 8;
-	clip[0].h = 64;
+	clip[0].w = mWidth / 8;
+	clip[0].h = mHeight;
 
-	clip[1].x = 480 / 8;
+	clip[1].x = mWidth / 8;
 	clip[1].y = 0;
-	clip[1].w = 480 / 8;
-	clip[1].h = 64;
+	clip[1].w = mWidth / 8;
+	clip[1].h = mHeight;
 
-	clip[2].x = 2 * 480 / 8;
+	clip[2].x = 2 * mWidth / 8;
 	clip[2].y = 0;
-	clip[2].w = 480 / 8;
-	clip[2].h = 64;
+	clip[2].w = mWidth / 8;
+	clip[2].h = mHeight;
 
-	clip[3].x = 3 * 480 / 8;
+	clip[3].x = 3 * mWidth / 8;
 	clip[3].y = 0;
-	clip[3].w = 480 / 8;
-	clip[3].h = 64;
+	clip[3].w = mWidth / 8;
+	clip[3].h = mHeight;
 
-	clip[4].x = 4 * 480 / 8;
+	clip[4].x = 4 * mWidth / 8;
 	clip[4].y = 0;
-	clip[4].w = 480 / 8;
-	clip[4].h = 64;
+	clip[4].w = mWidth / 8;
+	clip[4].h = mHeight;
 
-	clip[5].x = 5 * 480 / 8;
+	clip[5].x = 5 * mWidth / 8;
 	clip[5].y = 0;
-	clip[5].w = 480 / 8;
-	clip[5].h = 64;
+	clip[5].w = mWidth / 8;
+	clip[5].h = mHeight;
 
-	clip[6].x = 6 * 480 / 8;
+	clip[6].x = 6 * mWidth / 8;
 	clip[6].y = 0;
-	clip[6].w = 480 / 8;
-	clip[6].h = 64;
+	clip[6].w = mWidth / 8;
+	clip[6].h = mHeight;
 
-	clip[7].x = 7 * 480 / 8;
+	clip[7].x = 7 * mWidth / 8;
 	clip[7].y = 0;
-	clip[7].w = 480 / 8;
-	clip[7].h = 64;
+	clip[7].w = mWidth / 8;
+	clip[7].h = mHeight;
 
 }
 
@@ -577,14 +586,17 @@ class MainObject: public Base
 
 	int lorr(SDL_Event & e);
 
-	float vel = 5;
 	void HandleAction(SDL_Event & e);
 	void HandleMove();
-	void set_rong_dai(int x, int y) {mWidth = x; mHeight = y ;}
+	void set_rong_dai(int x, int y)
+	{
+		mWidth = x;
+		mHeight = y;
+	}
+
 	vector<Bullet> Bul;
 	float mVelx, mVely;
-	Hieu_ung hieu_ung_main ;
-
+	Hieu_ung hieu_ung_main;
 
 	private:
 
@@ -603,57 +615,50 @@ MainObject::~MainObject() {}
 
 int MainObject::lorr(SDL_Event & e)
 {
-    //int u ;
+	//int u ;
 	//if(e.type == SDL_KEYDOWN && e.key.repeat == 0)
-		//Adjust the velocity
-		if (e.key.keysym.sym == SDLK_LEFT)
-		{
-		    //cerr<<e.key.keysym.sym <<endl   ;
-			return 97;
-		}
-		else if (e.key.keysym.sym == SDLK_RIGHT)
-		{
-		    //cerr << e.key.keysym.sym << endl ;
-			return 100;
-		}
+	//Adjust the velocity
+	if (e.key.keysym.sym == SDLK_LEFT)
+	{
+		//cerr<<e.key.keysym.sym <<endl   ;
+		return 97;
+	}
+	else if (e.key.keysym.sym == SDLK_RIGHT)
+	{
+		//cerr << e.key.keysym.sym << endl ;
+		return 100;
+	}
 
 	//return 999 ;
-
 
 }
 
 void MainObject::HandleAction(SDL_Event & e)
 {
-    //cout << "dang_xet" << endl ;
+	//cout << "dang_xet" << endl ;
 
 	//If a key was pressed
 	if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 	{
 		//Adjust the velocity
-		 if(e.key.keysym.sym == SDLK_RIGHT){
-				mVelx += 10;
-				//cout << "thoat_nhan_phim d" << endl ;
-				//cerr << e.key.keysym.sym << endl ;
-		 }
+		if (e.key.keysym.sym == SDLK_RIGHT)
+		{
+			mVelx += 10;
+			//cout << "thoat_nhan_phim d" << endl ;
+			//cerr << e.key.keysym.sym << endl ;
+		}
 		else if (e.key.keysym.sym == SDLK_LEFT)
 		{
-
-
-				mVelx -= 10;
-				//cout << "thoat_nhan_phim a" << endl ;
-
-				}
-
-
-
-			else if(e.key.keysym.sym == SDLK_UP  )
-            {
-                for(int i = 0 ; i <= 200 ; i ++)
-                {
-                    mPosy -- ;
-                }
-            }
-
+			mVelx -= 10;
+			//cout << "thoat_nhan_phim a" << endl ;
+		}
+		else if (e.key.keysym.sym == SDLK_UP)
+		{
+			for (int i = 0; i <= 200; i++)
+			{
+				mPosy--;
+			}
+		}
 	}
 
 	//If a key was released
@@ -662,21 +667,18 @@ void MainObject::HandleAction(SDL_Event & e)
 		//Adjust the velocity
 		if (e.key.keysym.sym == SDLK_LEFT)
 		{
-
-
-				mVelx += 10;
-				//cout << "thoat_nhan_phim a" << endl ;
-				}
-        else if(e.key.keysym.sym == SDLK_RIGHT){
-				mVelx -= 10;
-				//cout << "thoat_nhan_phim d" << endl ;
-
-			}
-
+			mVelx += 10;
+			//cout << "thoat_nhan_phim a" << endl ;
 		}
-
+		else if (e.key.keysym.sym == SDLK_RIGHT)
+		{
+			mVelx -= 10;
+			//cout << "thoat_nhan_phim d" << endl ;
+		}
+	}
 	else if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
+		Mix_PlayChannel(-1, gGun, 0);
 		int x1, y1;
 		SDL_GetMouseState(&x1, &y1);
 		float x = x1, y = y1;
@@ -687,6 +689,7 @@ void MainObject::HandleAction(SDL_Event & e)
 
 		Bul.push_back(new_bul);
 		so_luong_dan--;
+		//Mix_PlayChannel(-1, gGun, 0);
 	}
 }
 
@@ -696,20 +699,22 @@ void MainObject::HandleMove()
 	mPosx += mVelx;
 	//cout << mVelx << " " << mPosx<< endl ;
 	//If the dot went too far to the left or right
-	if ((mPosx <= bien_ngang_left) )
+	if ((mPosx <= bien_ngang_left))
 	{
 		//Move back
-		mPosx += (bien_ngang_left-mPosx) ;
+		mPosx += (bien_ngang_left - mPosx);
 	}
-	if( (mPosx+60 >= bien_ngang_right))
-    {
-        mPosx += bien_ngang_right - (mPosx+60);
-    }
+
+	if ((mPosx + 60 >= bien_ngang_right))
+	{
+		mPosx += bien_ngang_right - (mPosx + 60);
+	}
+
 	//Move the dot up or down
-	if(mPosy <= bien_duoi)
-    {
-        mPosy += 10 ;
-    }
+	if (mPosy <= bien_duoi)
+	{
+		mPosy += 10;
+	}
 
 	//If the dot went too far up or down
 
@@ -987,16 +992,16 @@ bool CheckCollision1(MainObject object1, Bullet object2)
 	return false;
 }
 
-
-
-Base pause;
-int map_index[20][10] ;
-TextObject text_level, text_hp, text_task, text_dan; // text
-bool win_task = false, pause_game = false;   // trang thai game
-int level, so_luong_chim, gioi_han_tren, kiem_soat_gioi_han, task;  // thong so level
+Base pause, new_game, resume;
+int map_index[20][10];
+TextObject text_level, text_hp, text_task, text_dan;	// text
+bool win_task = false, pause_game = false;	// trang thai game
+int level, so_luong_chim, gioi_han_tren, kiem_soat_gioi_han, task;	// thong so level
 Hieu_ung vu_no, test_frame;
-vector<Item> list_item ;
+vector<Item> list_item;
+vector<Hieu_ung> list_exp ;
 vector<string> list_chim
+
 {
 	"chim_nau.png", "chim_vang.png", "chim_bom.png", "chim_xanh.png", "pig_fly.png" };
 
@@ -1004,49 +1009,30 @@ vector<string> list_chim
 int main(int argc, char *argv[])
 {
 	/*xu ly level */
+	int x_time = 0;
+	int frame_right = 0, frame_left = 0;
+
 	ifstream ip("du_lieu_game.txt");
-	ifstream ip_map("map_text.txt") ;
+	ifstream ip_map("map_text.txt");
 	ofstream op("du_lieu_game1.txt");
-	if (ip)
-	{
-		cout << " success ";
-	}
-	int frame_right = 0 , frame_left = 0  ;
 
 	ip >> level;
-	for(int i = 8 ; i < 10 ; i ++ )
-    {
-        for(int j = 0 ; j < 20 ; j++ )
-        {
-            ip_map >> map_index[j][i] ;
-        }
-    }
-    for(int i = 0 ; i< 20 ; i++)
-    {
-        for(int j = 0 ; j<10 ; j++)
-        {
-            cout << map_index[i][j] << " " ;
-        }
-        cout << endl ;
-    }
-    cout << map_index[9][7] << endl  ;
+
+	/*mang map */
+	for (int i = 8; i < 10; i++)
+	{
+		for (int j = 0; j < 20; j++)
+		{
+			ip_map >> map_index[j][i];
+		}
+	}
+
 	/*kiem_soat_chim */
-	if (level % 2 == 0)
-	{
-		kiem_soat_gioi_han = 0;
-	}
-	else
-	{
-		kiem_soat_gioi_han = 1;
-	}
 
 	task = 5 + level * 5;
-	human.set_rong_dai(60, 60) ;
-	gioi_han_tren = gioihan(level);
-	so_luong_chim = soluongchim(level);
-	so_luong_dan = 50;
+	human.set_rong_dai(60, 60);
 
-	string chim_at_level[so_luong_chim];
+	string chim_at_level[100];
 
 	TTF_Init();
 	gfont = TTF_OpenFont("Xerox Sans Serif Wide Bold.ttf", 28);
@@ -1054,15 +1040,18 @@ int main(int argc, char *argv[])
 	bool vao_game = false;
 	Base background;
 
-	Threat threat[so_luong_chim];
+	Threat threat[100];
 
 	srand(time(NULL));
 
 	init();
+	///
+	//Mix_PlayMusic(gMusic, -1);
+	///
 	background.setrect(0, 0);
 	human.setrect(600, -100);
-	bool quit = false ;
-	int LorR = 97 ;
+	bool quit = false;
+	int LorR = 100;
 
 	/*loop */
 	while (quit != true)
@@ -1077,11 +1066,9 @@ int main(int argc, char *argv[])
 			if (vao_game == true)
 			{
 				human.HandleAction(e);
-				//cout << "imhere" << endl ;
-						//human.HandleMove();
 				if (e.type == SDL_KEYDOWN && (e.key.keysym.sym == SDLK_LEFT || e.key.keysym.sym == SDLK_RIGHT))
 					LorR = human.lorr(e);
-					//cout << LorR << endl ;
+				//cout << LorR << endl ;
 
 				if (pause_game == false)
 				{
@@ -1097,7 +1084,7 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-				else // if pause_game = true
+				else	// if pause_game = true
 				{
 					if (e.type == SDL_MOUSEBUTTONDOWN)
 					{
@@ -1115,341 +1102,445 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-
 			}
 
 			// xu ly vao game hay khong
-			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			else
 			{
-				int x, y;
-				SDL_GetMouseState(&x, &y);
-				if (500 <= x && 700 >= x && 50 <= y && 150 >= y)
+				if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION)
 				{
-					vao_game = true;
-					human.hp = 100;
-					human.setrect(600,0) ;
-					so_luong_dan = 200;
-					for (int i = 0; i < so_luong_chim; i++)
+					int x, y;
+					SDL_GetMouseState(&x, &y);
+					if (420 <= x && 770 >= x && 23 <= y && 99 >= y && e.type == SDL_MOUSEBUTTONDOWN)
 					{
-						if (i % 2 == 0)
+						level = 1;
+						vao_game = true;
+						human.hp = 100;
+						human.mVelx = 0;
+						gioi_han_tren = gioihan(level);
+						if (level % 2 == 0)
 						{
-							chim_at_level[i] = list_chim[gioi_han_tren - 1 + kiem_soat_gioi_han];
+							kiem_soat_gioi_han = 0;
 						}
 						else
 						{
-							chim_at_level[i] = list_chim[gioi_han_tren];
+							kiem_soat_gioi_han = 1;
+						}
+
+						so_luong_chim = soluongchim(level);
+						so_luong_dan = 50;
+						human.setrect(600, 0);
+
+						task = 20;
+
+						for (int i = 0; i < so_luong_chim; i++)
+						{
+							if (i % 2 == 0)
+							{
+								chim_at_level[i] = list_chim[gioi_han_tren - 1 + kiem_soat_gioi_han];
+								threat[i].set_vector_move(false);
+								threat[i].setrect(1200 + i* random(100, 400), random(20, 100));
+							}
+							else
+							{
+								chim_at_level[i] = list_chim[gioi_han_tren];
+								threat[i].set_vector_move(true);
+								threat[i].setrect(0 - i* random(100, 400), random(20, 100));
+							}
+
+							threat[i].set_hp(20);
 						}
 					}
 
-					for (int i = 0; i < so_luong_chim; i++)
+					if (420 <= x && 770 >= x && 120 <= y && 196 >= y && e.type == SDL_MOUSEBUTTONDOWN)
 					{
-						if (i % 2 == 0)
+						vao_game = true;
+						human.hp = 100;
+						gioi_han_tren = gioihan(level);
+						so_luong_chim = soluongchim(level);
+						so_luong_dan = 50;
+						human.mVelx = 0;
+						human.setrect(600, 0);
+						task = 12;
+						if (level % 2 == 0)
 						{
-							threat[i].set_vector_move(false);
-							threat[i].setrect(1200 + i* random(100, 400), random(20, 100));
+							kiem_soat_gioi_han = 0;
 						}
 						else
 						{
-							threat[i].set_vector_move(true);
-							threat[i].setrect(0 - i* random(100, 400), random(20, 100));
+							kiem_soat_gioi_han = 1;
 						}
 
-						threat[i].set_hp(20);
+						//level = 1;
+
+						for (int i = 0; i < so_luong_chim; i++)
+						{
+							if (i % 2 == 0)
+							{
+								chim_at_level[i] = list_chim[gioi_han_tren - 1 + kiem_soat_gioi_han];
+								threat[i].set_vector_move(false);
+								threat[i].setrect(1200 + i* random(100, 400), random(20, 100));
+							}
+							else
+							{
+								chim_at_level[i] = list_chim[gioi_han_tren];
+								threat[i].set_vector_move(true);
+								threat[i].setrect(0 - i* random(100, 400), random(20, 100));
+							}
+
+							threat[i].set_hp(20);
+						}
 					}
+
+					if (420 <= x && 770 >= x && 23 <= y && 99 >= y && e.type == SDL_MOUSEMOTION)
+					{
+						new_game.trang_thai_bat_tat = 1;
+					}
+					else new_game.trang_thai_bat_tat = 0;
+					if (420 <= x && 770 >= x && 120 <= y && 196 >= y && e.type == SDL_MOUSEMOTION)
+					{
+						resume.trang_thai_bat_tat = 1;
+					}
+					else resume.trang_thai_bat_tat = 0;
 				}
 			}
 		}
+
 		human.HandleMove();
 
-
-
-
 		if (vao_game == false)
-		{
+		{ /*chua vao game, menu start */
 			background.loadfromfile("menu1-min.png");
-			background.setrect(0,0) ;
+			background.setrect(0, 0);
 			background.render();
+			if (new_game.trang_thai_bat_tat == 0)
+				new_game.loadfromfile("new_game1.png");
+			else new_game.loadfromfile("new_game2.png");
+			new_game.setrect(420, 23);
+			new_game.render();
+
+			if (resume.trang_thai_bat_tat == 0)
+				resume.loadfromfile("resume1.png");
+			else resume.loadfromfile("resume2.png");
+			resume.setrect(420, 120);
+			resume.render();
+
+			human.hieu_ung_main.loadfromfile("player_left.png");
+			human.hieu_ung_main.set_clip() ;
+			human.hieu_ung_main.setrect(570, 400);
+			human.hieu_ung_main.set_frame(frame_left);
+			human.hieu_ung_main.render_sprite();
+			if (SDL_GetTicks() - x_time > 100)
+			{
+				x_time = SDL_GetTicks();
+				frame_left++;
+			}
+
+			if (frame_left == 7)
+			{
+				frame_left = 0;
+			}
 		}
 
+		/*neu vao game */
 		if (vao_game == true)
-		{
-			//clear screen
-
-
-			SDL_SetRenderDrawColor(grenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-			SDL_RenderClear(grenderer);
-
-			//loadbackground
-			background.loadfromfile("back_ground_buoi_chieu.png");
-				background.setrect(0,0) ;
-				background.render();
-
-				for(int o = 0 ; o <= 19 ; o ++ )
-                {
-                    //int tambo,m ;
-                    for( int m = 8 ; m <= 9 ; m ++ )
-                    {
-                        if(map_index[o][m] == 1)
-                        {
-                            background.loadfromfile("2.png");
-                            background.setrect(o*60,m*60) ;
-                            background.render() ;
-                        }
-
-                    }
-                }
-
-			// pause game
-			pause.loadfromfile("pause1.png");
-			pause.setrect(1000, 0);
-			pause.render();
-
-			// level ;
-			text_level.Set_Color(1);
-			text_level.Set_Text("LEVEL " + doi_so_sang_text(level));
-			text_level.setrect(20, 20);
-			text_level.loadFromRenderedText();
-			text_level.render();
-
-			if (pause_game == true )
-			{
-				background.loadfromfile("bg600.png");
-				background.setrect(0,0) ;
-				background.render();
-				background.loadfromfile("2.png");
-				for(int o = 0 ; o <= 1140 ; o += 60 )
-                {
-                    for(int m = 480 ; m <= 540 ; m += 60 )
-                    {
-                        background.setrect(o,m) ;
-                        background.render() ;
-
-                    }
-                }
-
+		{ /*neu pause game */
+			if (pause_game == true)
+			{ /*menu pause game */
+				quit = true;
 			}
-			else if (win_task == false && human.hp > 0 && so_luong_dan > 0)
-			{
-			 	//loadnhanvat
-			 	int x =  lay_ra_o(human.get_pos_x()) ;
-			 	int y = lay_ra_o(human.get_pos_y() + 10 )  ;
 
-
-			 	if(map_index[x][8] == 0 )
-			 	{
-			 	    bien_duoi = 475;
-
-			 	}
-                else bien_duoi = 415 ;
-
-
-                if(map_index[x-1][y] == 1 )
-                {
-                    bien_ngang_left = 60 * (x) ;
-                }
-                else
-                {
-                    bien_ngang_left = 0;
-                }
-                if(map_index[x+1][y] == 1)
-                {
-                    bien_ngang_right  = 60 * (x + 1) ;
-
-                }
-                else
-                {
-                    bien_ngang_right = 1200 ;
-                }
-
-
-			 	//cout << x << " " << y << " " << map_index[x-1][y] << " " << map_index[x+1][y]<< " " << bien_ngang_left << " " << bien_ngang_right << " " << human.get_pos_x()<< " " << human.get_pos_y() <<  endl ;
-
-			 	//human.HandleMove();
-
-				if (LorR == 100)
-				{
-				   // /*
-					human.hieu_ung_main.loadfromfile("player_right.png");
-					human.hieu_ung_main.setrect(human.get_pos_x(),human.get_pos_y()) ;
-					human.hieu_ung_main.set_frame(frame_right) ;
-					//SDL_Delay(50) ;
-					human.hieu_ung_main.render_sprite() ;
-					if(human.mVelx !=0) frame_right ++ ;
-					else frame_right = 0 ;
-					if(frame_right == 7) frame_right = 0 ;
-					//cout << frame_right << endl ;
-				//	*/
-
-					//human.loadfromfile("guy.png") ;
-
-				}
-				else if(LorR == 97)
-				{
-				    // /*
-					human.hieu_ung_main.loadfromfile("player_left.png");
-					human.hieu_ung_main.setrect(human.get_pos_x(),human.get_pos_y()) ;
-					human.hieu_ung_main.set_frame(frame_left) ;
-					human.hieu_ung_main.render_sprite() ;
-					if(human.mVelx !=0) frame_left ++ ;
-					else frame_left = 0 ;
-					if(frame_left == 7) frame_left = 0 ;
-                    //    */
-
-                       // human.loadfromfile("guy_flip.png") ;
+			/*neu khong pause game */
+			if (pause_game == false)
+			{ /*neu win levle */
+				if (win_task == true)
+				{ /*menu win */
+					win_task = false;
+					vao_game = false;
+					human.Bul.clear();
+					list_item.clear();
 				}
 
-				//cout << LorR << endl ;
-				//human.render();
-				human.set_rong_dai(60, 60) ;
+				/*neu loss level */
+				if (win_task == false && (human.hp <= 0 || so_luong_dan <= 0))
+				{ /*menu loss */
+					vao_game = false;
+					human.Bul.clear();
+					list_item.clear();
+				}
 
-				for (int i = 0; i < so_luong_chim; i++)
-				{
-					threat[i].loadfromfile(chim_at_level[i]);
-					threat[i].threat_move();
-					threat[i].render();
+				/*neu chua win + dang choi */
+				if (win_task == false && human.hp > 0 && so_luong_dan > 0)
+				{ /*choi_game */
+					SDL_SetRenderDrawColor(grenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+					SDL_RenderClear(grenderer);
 
-					for (int j = 0; j < threat[i].Bul.size(); j++)
+					//loadbackground
+					background.loadfromfile("back_ground_buoi_chieu.png");
+					background.setrect(0, 0);
+					background.render();
+
+					//human.Bul.clear() ;
+					//list_item.clear() ;
+
+					for (int o = 0; o <= 19; o++)
 					{
-						threat[i].Bul[j].loadfromfile("egg.png");
-						if (threat[i].Bul[j].da_lay_muctieu == false)
+					 			//int tambo,m ;
+						for (int m = 8; m <= 9; m++)
 						{
-							threat[i].Bul[j].get_muctieu(human.get_pos_x(), human.get_pos_y());
-							threat[i].Bul[j].SetVel((human.get_pos_x() - threat[i].Bul[j].get_pos_x()) / absd(human.get_pos_x() - threat[i].Bul[j].get_pos_x()) *5, (human.get_pos_y() - threat[i].Bul[j].get_pos_y()) / absd(human.get_pos_x() - threat[i].Bul[j].get_pos_x()) *5);
-							threat[i].Bul[j].da_lay_muctieu = true;
-						}
-
-						threat[i].Bul[j].BulletMove();
-
-						threat[i].Bul[j].render();
-						if (CheckCollision1(human, threat[i].Bul[j]) == true || threat[i].Bul[j].get_move() == false)
-						{
-							if (CheckCollision1(human, threat[i].Bul[j]) == true)
+							if (map_index[o][m] == 1)
 							{
-								human.hp -= 1;
+								background.loadfromfile("2.png");
+								background.setrect(o *60, m *60);
+								background.render();
 							}
-
-							threat[i].Bul.erase(threat[i].Bul.begin() + j);
 						}
 					}
-				}
 
-				for (int k = 0; k < human.Bul.size(); k++)
-				{
-					human.Bul[k].loadfromfile("sphere.png");
-					human.Bul[k].set_up_or_down(true);
-					human.Bul[k].BulletMove();
-					human.Bul[k].set_hp(10);
-					if (human.Bul[k].get_move())
-						human.Bul[k].render();
+					// pause game
+					pause.loadfromfile("pause1.png");
+					pause.setrect(1000, 0);
+					pause.render();
+
+					// level ;
+					text_level.Set_Color(1);
+					text_level.Set_Text("LEVEL " + doi_so_sang_text(level));
+					text_level.setrect(20, 20);
+					text_level.loadFromRenderedText();
+					text_level.render();
+
+					/*xu ly lay ra vi tri, va cham map cho nhan vat */
+					int x = lay_ra_o(human.get_pos_x());
+					int y = lay_ra_o(human.get_pos_y() + 10);
+
+					if (map_index[x][8] == 0)
+					{
+						bien_duoi = 475;
+					}
+					else bien_duoi = 415;
+
+					if (map_index[x - 1][y] == 1)
+					{
+						bien_ngang_left = 60 *(x);
+					}
+					else
+					{
+						bien_ngang_left = 0;
+					}
+
+					if (map_index[x + 1][y] == 1)
+					{
+						bien_ngang_right = 60 *(x + 1);
+					}
+					else
+					{
+						bien_ngang_right = 1200;
+					}
+
+					/*xu ly trai phai, frame di chuyen */
+					if (LorR == 100)
+					{
+						human.hieu_ung_main.loadfromfile("player_right.png");
+						human.hieu_ung_main.set_clip() ;
+						human.hieu_ung_main.setrect(human.get_pos_x(), human.get_pos_y());
+						human.hieu_ung_main.set_frame(frame_right);
+						human.hieu_ung_main.render_sprite();
+						if (human.mVelx != 0) frame_right++;
+						else frame_right = 0;
+						if (frame_right == 7) frame_right = 0;
+					}
+					else if (LorR == 97)
+					{
+						human.hieu_ung_main.loadfromfile("player_left.png");
+						human.hieu_ung_main.set_clip() ;
+						human.hieu_ung_main.setrect(human.get_pos_x(), human.get_pos_y());
+						human.hieu_ung_main.set_frame(frame_left);
+						human.hieu_ung_main.render_sprite();
+						if (human.mVelx != 0) frame_left++;
+						else frame_left = 0;
+						if (frame_left == 7) frame_left = 0;
+					}
+
+					human.set_rong_dai(60, 60);
+
+					/*xu ly chim + di chuyen + bullet cua chim */
 					for (int i = 0; i < so_luong_chim; i++)
 					{
-						if (CheckCollision(threat[i], human.Bul[k]))
+						threat[i].loadfromfile(chim_at_level[i]);
+						threat[i].threat_move();
+						threat[i].render();
+
+						/*xu ly bullet cua tung chim */
+						for (int j = 0; j < threat[i].Bul.size(); j++)
 						{
-							human.Bul.erase(human.Bul.begin() + k);
-							threat[i].hp -= human.Bul[k].hp;
-							if (threat[i].hp == 0)
+							threat[i].Bul[j].loadfromfile("egg.png");
+
+							if (threat[i].Bul[j].da_lay_muctieu == false)
 							{
-							    Item new_item ;
-							    new_item.ten_item = random(1,3) ;
-							    new_item.time_ton_tai = SDL_GetTicks() ;
-							    new_item.setrect(threat[i].get_pos_x(),threat[i].get_pos_y()) ;
-							    list_item.push_back(new_item) ;
+								threat[i].Bul[j].get_muctieu(human.get_pos_x(), human.get_pos_y());
+								threat[i].Bul[j].SetVel((human.get_pos_x() - threat[i].Bul[j].get_pos_x()) / absd(human.get_pos_y() - threat[i].Bul[j].get_pos_y()) *5, (human.get_pos_y() - threat[i].Bul[j].get_pos_y()) / absd(human.get_pos_y() - threat[i].Bul[j].get_pos_y()) *5);
+								threat[i].Bul[j].da_lay_muctieu = true;
+							}
 
-							    				{ 						for (int l = 0; l <= 4; l++)
-									{
-										vu_no.setrect(threat[i].get_pos_x() + 3 *l, threat[i].get_pos_y() + 3 *l);
-										vu_no.loadfromfile("exp.png");
-										vu_no.set_frame(l);
-										vu_no.render_sprite();
-										//SDL_Delay(100) ;
-										//SDL_RenderPresent(grenderer) ;
-										//SDL_Delay(100) ;
-									}
+							threat[i].Bul[j].BulletMove();
 
-									//SDL_Delay(150) ;
-								}
-
-								threat[i].hp = 20;
-								if (threat[i].get_vector() == false)
-									threat[i].setrect(3000, random(20, 100));
-								else threat[i].setrect(-1800, random(20, 100));
-								task--;
-								if (task == 0)
+							threat[i].Bul[j].render();
+							if (CheckCollision1(human, threat[i].Bul[j]) == true || threat[i].Bul[j].get_move() == false)
+							{
+								if (CheckCollision1(human, threat[i].Bul[j]) == true)
 								{
-									win_task = true;
+									human.hp -= 10;
 								}
+
+								threat[i].Bul.erase(threat[i].Bul.begin() + j);
 							}
 						}
 					}
 
-					if (!human.Bul[k].get_move())
+					/*xuly dan cua nhan vat */
+					for (int k = 0; k < human.Bul.size(); k++)
 					{
-						human.Bul.erase(human.Bul.begin() + k);
-						//cout << "daxoa va conlai "<< human.Bul.size() << endl ;
+						human.Bul[k].loadfromfile("sphere.png");
+						human.Bul[k].set_up_or_down(true);
+						human.Bul[k].BulletMove();
+						human.Bul[k].set_hp(10);
+						if (human.Bul[k].get_move())
+						{
+							human.Bul[k].render();
+						}
+
+						for (int i = 0; i < so_luong_chim; i++) /*check va cham voi tung chim */
+						{
+							if (CheckCollision(threat[i], human.Bul[k]))
+							{
+								human.Bul.erase(human.Bul.begin() + k);
+								threat[i].hp -= human.Bul[k].hp;
+								if (threat[i].hp == 0)
+								{
+									Mix_PlayChannel(-1, gBirdYell, 0);
+
+									Item new_item;
+									new_item.ten_item = random(1, 3);
+									new_item.time_ton_tai = SDL_GetTicks();
+									new_item.setrect(threat[i].get_pos_x(), threat[i].get_pos_y());
+									list_item.push_back(new_item);
+
+									Hieu_ung new_hieu_ung ;
+									new_hieu_ung.setrect(threat[i].get_pos_x() - 50, threat[i].get_pos_y()-50) ;
+									new_hieu_ung.loadfromfile("exp2.png") ;
+									new_hieu_ung.set_clip() ;
+									list_exp.push_back(new_hieu_ung) ;
+
+									threat[i].hp = 20; /*hoi sinh cho con chim vua bi ban chet */
+									if (threat[i].get_vector() == false)
+										threat[i].setrect(3000, random(20, 100));
+									else threat[i].setrect(-1800, random(20, 100));
+									task--;
+									if (task == 0)
+									{
+										win_task = true;
+										level++;
+									}
+								}
+							}
+						}
+
+						if (!human.Bul[k].get_move())
+						{
+							human.Bul.erase(human.Bul.begin() + k);
+							//cout << "daxoa va conlai "<< human.Bul.size() << endl ;
+						}
 					}
-				}
-				for(int li = 0 ; li < list_item.size() ; li ++)
-                {
 
-                    if(SDL_GetTicks() - list_item[li].time_ton_tai >= 8000.0 )
+					/*xu ly cac item xuat hien */
+					for (int li = 0; li < list_item.size(); li++)
+					{ /*thoi gian ton tai cua item */
+						if (SDL_GetTicks() - list_item[li].time_ton_tai >= 8000.0)
+						{
+							list_item.erase(list_item.begin() + li);
+							//continue ;
+						}
+
+						//cout << list_item[li].time_ton_tai << endl ;
+						switch (list_item[li].ten_item)
+						{
+							case 1:
+								list_item[li].loadfromfile("trai_tim_be_nho.png");
+								break;
+							case 2:
+								list_item[li].loadfromfile("hao_quang_vip.png");
+								break;
+							case 3:
+								list_item[li].loadfromfile("hao_quang_vip.png");
+								break;
+						}
+
+						list_item[li].item_move();
+						list_item[li].render();
+					}
+					/* xu ly vu no */
+					for(int q = 0 ; q < list_exp.size() ; q ++ )
                     {
-                        list_item.erase(list_item.begin() + li) ;
-                        //continue ;
+                        if(list_exp[q].frame == 8)
+                        {
+                            list_exp.erase(list_exp.begin() + q);
+                          // list_exp[q].frame = 0 ;
+                        }
+
+                        list_exp[q].loadfromfile("exp2.png") ;
+                         cout << list_exp[q].get_height() << " " << list_exp[q].get_width() ;
+                        //list_exp[q].set_clip() ;
+
+                        list_exp[q].set_frame(list_exp[q].frame) ;
+
+                        list_exp[q].frame ++ ;
+                        // cout << list_exp[q].frame ;
+                        list_exp[q].render_sprite() ;
+                        //cout << "wtf" ;
+
+
                     }
 
-                    //cout << list_item[li].time_ton_tai << endl ;
-                    switch(list_item[li].ten_item)
-                    {
-                        case 1:list_item[li].loadfromfile("trai_tim_be_nho.png") ; break ;
-                        case 2:list_item[li].loadfromfile("hao_quang_vip.png") ; break ;
-                        case 3:list_item[li].loadfromfile("hao_quang_vip.png") ; break ;
-                    }
-                    list_item[li].item_move() ;
-                    list_item[li].render() ;
-                }
 
-				if (so_luong_dan == 0)
-				{
-					win_task = false;
+					if (so_luong_dan == 0)
+					{
+						win_task = false;
+					}
+
+					/*show score */
+					text_hp.Set_Color(1);
+					text_hp.Set_Text("HP " + doi_so_sang_text(human.hp));
+					text_hp.setrect(20, 60);
+					text_hp.loadFromRenderedText();
+					text_hp.render();
+
+					text_task.Set_Color(1);
+					text_task.Set_Text("TASK REMAIN " + doi_so_sang_text(task));
+					text_task.setrect(20, 90);
+					text_task.loadFromRenderedText();
+					text_task.render();
+
+					text_dan.Set_Color(1);
+					text_dan.Set_Text("Bullet " + doi_so_sang_text(so_luong_dan));
+					text_dan.setrect(20, 120);
+					text_dan.loadFromRenderedText();
+					text_dan.render();
+
+
 				}
-
-				// show score ;
-				text_hp.Set_Color(1);
-				text_hp.Set_Text("HP " + doi_so_sang_text(human.hp));
-				text_hp.setrect(20, 60);
-				text_hp.loadFromRenderedText();
-				text_hp.render();
-
-				text_task.Set_Color(1);
-				text_task.Set_Text("TASK REMAIN " + doi_so_sang_text(task));
-				text_task.setrect(20, 90);
-				text_task.loadFromRenderedText();
-				text_task.render();
-
-				text_dan.Set_Color(1);
-				text_dan.Set_Text("Bullet " + doi_so_sang_text(so_luong_dan));
-				text_dan.setrect(20, 120);
-				text_dan.loadFromRenderedText();
-				text_dan.render();
-			}
-			else if (win_task == false && (human.hp <= 0 || so_luong_dan <= 0))
-			{
-				vao_game = false;
 			}
 		}
 
-		//render
-		//cout << vao_game<< endl ;
 		SDL_RenderPresent(grenderer);
 
 		SDL_RenderClear(grenderer);
+
 	}
 
-
-	SDL_GetError() ;
+	SDL_GetError();
 	close();
-	op << level;
 
+	op << level;
 
 	ifstream ip1("du_lieu_game1.txt");
 	ofstream op1("du_lieu_game.txt");
